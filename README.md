@@ -1,2 +1,2 @@
-# envfile
-EnvFile hook
+# PathEnv
+Path Environment Function and Command Prompt

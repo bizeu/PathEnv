@@ -1,12 +1,12 @@
 # shellcheck shell=bash disable=SC2001,SC2120
 
 #
-# sources .envfile in current working or git top path, calls direnv hook and sources completions
+# sources .EnvFile in current working or git top path, calls direnv hook and sources completions
 
 [ "${BASH_SOURCE-}" ] || return
 
 # <html><h2>Project Directory </h2>
-# <p><strong><code>$PROJECT_DIR</code></strong>: if found on first line of envfile.</p>
+# <p><strong><code>$PROJECT_DIR</code></strong>: if found on first line of EnvFile.</p>
 # <p><strong><code>PROJECT_DIR=$PROJECT_DIR$</code></strong></p>
 # </html>
 export PROJECT_DIR
@@ -33,7 +33,7 @@ export SUPER
 export TOP
 
 #######################################
-# sources .envfile in current working or git top path, calls direnv hook and sources completions
+# sources .EnvFile in current working or git top path, calls direnv hook and sources completions
 # Globals:
 #   __ENVFILE_SET
 #   PATH
@@ -46,8 +46,8 @@ export TOP
 # Returns:
 #   $?
 #######################################
-envfile() {
-  local rc=$? envfile file line tops tmp variable
+pathenv() {
+  local rc=$? EnvFile file function="pathenv" line tops tmp variable
 
   test $# -eq 0 || "${FUNCNAME[0]}.sh" "$@"
 
@@ -58,18 +58,18 @@ envfile() {
       TOP="$(echo "${tops}" | head -1)"
     fi
 
-    envfile="${SUPER:-.}/.envfile"
+    EnvFile="${SUPER:-.}/.EnvFile"
 
-    if [ -f "${envfile}" ]; then
-      [ ! "${PS1-}" ] || >&2 echo "envfile: loading $(echo "${envfile}" | sed "s|${HOME}|~|")"
+    if [ -f "${EnvFile}" ]; then
+      [ ! "${PS1-}" ] || >&2 echo "${function}: loading $(echo "${EnvFile}" | sed "s|${HOME}|~|")"
 
       line=0
-      if head -1 "${envfile}" | grep -q "=\$PROJECT_DIR\$$"; then
-        variable="$(head -1 "${envfile}" | cut -d '=' -f 1)"
+      if head -1 "${EnvFile}" | grep -q "=\$PROJECT_DIR\$$"; then
+        variable="$(head -1 "${EnvFile}" | cut -d '=' -f 1)"
         [ "${variable}" = "PROJECT_DIR" ] || eval "export ${variable}=${PROJECT_DIR}"
         line=1
       fi
-      eval "$(awk -v l=$line 'FNR > l { gsub("export ", ""); gsub("^", "export "); print }' "${envfile}")" || return
+      eval "$(awk -v l=$line 'FNR > l { gsub("export ", ""); gsub("^", "export "); print }' "${EnvFile}")" || return
       PATH="$(echo "${PATH}" | tr ':' '\n' | uniq | tr '\n' ':' | sed 's/:$//')"
     fi
     ! test -d "${PROJECT_DIR}/bin" || [[ "${PATH}" =~ ${PROJECT_DIR}/bin: ]] || export PATH="${PROJECT_DIR}/bin:${PATH}"
@@ -80,8 +80,8 @@ envfile() {
   case "$(cat "${tmp}")" in
     *"direnv allow"*)
       direnv allow
-      envfile
-      [ ! "${PS1-}" ] || >&2 echo "envfile: allowed"
+      ${function}
+      [ ! "${PS1-}" ] || >&2 echo "${function}: allowed"
       ;;
     *"direnv: loading"*)
       [ ! "${PS1-}" ] || grep -E "^direnv: loading|^direnv: export" "${tmp}"
@@ -93,7 +93,7 @@ envfile() {
       fi
       ;;
     *"direnv: unloading"*)
-      [ ! "${PS1-}" ] || >&2 echo "envfile: unloading"
+      [ ! "${PS1-}" ] || >&2 echo "${function}: unloading"
       eval echo "${__ENVFILE_SET}" 2>&1 | grep -vE 'BASH|readonly' || true
       unset __ENVFILE_SET
       ;;
@@ -105,9 +105,9 @@ envfile() {
 }
 __ENVFILE_SET=
 
-export -f envfile
+export -f pathenv
 
-[[ "${PROMPT_COMMAND:-}" =~ _direnv_hook ]] || PROMPT_COMMAND="envfile${PROMPT_COMMAND:+; ${PROMPT_COMMAND}}"
+[[ "${PROMPT_COMMAND:-}" =~ pathenv ]] || PROMPT_COMMAND="pathenv${PROMPT_COMMAND:+; ${PROMPT_COMMAND}}"
 
 if [ "${BASH_SOURCE[0]##*/}" = "${0##*/}" ]; then
   for arg; do
@@ -121,11 +121,11 @@ if [ "${BASH_SOURCE[0]##*/}" = "${0##*/}" ]; then
 usage: . ${0##*/}
    or: ${0##*/} -h|-help|help
 
-sources .envfile in current working or git super top path, calls direnv hook and sources completions
+sources .EnvFile in current working or git super top path, calls direnv hook and sources completions
 
-If VARIABLE=\$PROJECT_DIR\$ in first line of .envfile file, VARIABLE is also set to \$PROJECT_DIR.
+If VARIABLE=\$PROJECT_DIR\$ in first line of .EnvFile file, VARIABLE is also set to \$PROJECT_DIR.
 
-\$PATH is updated with \$SUPER/bin if exists and no .envfile file is found .
+\$PATH is updated with \$SUPER/bin if exists and no .EnvFile file is found .
 
 Commands:
    -h, --help, help               display this help and exit
