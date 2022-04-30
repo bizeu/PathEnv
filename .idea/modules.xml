@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/PathEnv.iml" filepath="$PROJECT_DIR$/.idea/PathEnv.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../bats/.idea/bats.iml" filepath="$PROJECT_DIR$/../bats/.idea/bats.iml" />
       <module fileurl="file:///usr/local/Homebrew/Library/Taps/bizeu/homebrew-tap/.idea/homebrew-tap.iml" filepath="/usr/local/Homebrew/Library/Taps/bizeu/homebrew-tap/.idea/homebrew-tap.iml" />
     </modules>
   </component>
