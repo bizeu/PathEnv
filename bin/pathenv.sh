@@ -35,7 +35,8 @@ export TOP
 #######################################
 # sources .EnvFile in current working or git top path, calls direnv hook and sources completions
 # Globals:
-#   __ENVFILE_SET
+#   __PATHENV_PREVIOUS_SUPER
+#   __PATHENV_SET
 #   PATH
 #   PROJECT_DIR
 #   PS1
@@ -47,16 +48,32 @@ export TOP
 #   $?
 #######################################
 pathenv() {
-  local rc=$? EnvFile file function="pathenv" line tops tmp variable
+  local rc=$? basename EnvFile file function="pathenv" line project=false set tops tmp upper variable verbose=false
+  set="$(grep -v "^rc=" <<< "${__PATHENV_SET-}")"
+  __PATHENV_PREVIOUS_SUPER=${SUPER-}
 
   test $# -eq 0 || "${FUNCNAME[0]}.sh" "$@"
 
-  if [ ! "${__ENVFILE_SET-}" ]; then
-    __ENVFILE_SET="$(set)"
-    if tops="$(git rev-parse --show-superproject-working-tree --show-toplevel 2>/dev/null)"; then
-      SUPER="$(echo "${tops}" | tail -1)"
-      TOP="$(echo "${tops}" | head -1)"
+  if tops="$(git rev-parse --show-superproject-working-tree --show-toplevel 2>/dev/null)"; then
+    project=true
+    SUPER="$(echo "${tops}" | tail -1)"
+    TOP="$(echo "${tops}" | head -1)"
+  fi
+  # TODO: no puedo cambiar todas las variables y funciones asi por asi, tienen que ser las que he cambiado yo haciendo algo aqui, o sea hay que guardar lo que he hecho y punto.
+  if [ "${SUPER-}" != "${__PATHENV_PREVIOUS_SUPER}" ]; then
+    __PATHENV_SET="$(set | grep -vE "^rc=|^set=|^BASH|")"
+    if [ "${SUPER-}" ]; then
+      basename="${SUPER##*/}"
+      upper="${basename^^}"
     fi
+    [ ! "${PS1-}" ] || >&2 echo "${function}: entering ${basename}"
+
+    export PROJECT_DIR
+    export SUPER
+    export TOP
+  fi
+
+  if [ ! "${__PATHENV_SET-}" ]; then
 
     EnvFile="${SUPER:-.}/.EnvFile"
 
@@ -94,8 +111,8 @@ pathenv() {
       ;;
     *"direnv: unloading"*)
       [ ! "${PS1-}" ] || >&2 echo "${function}: unloading"
-      eval echo "${__ENVFILE_SET}" 2>&1 | grep -vE 'BASH|readonly' || true
-      unset __ENVFILE_SET
+      eval echo "${__PATHENV_SET}" 2>&1 | grep -vE 'BASH|readonly' || true
+      unset __PATHENV_SET
       ;;
     *) cat "${tmp}" ;;
   esac
@@ -103,7 +120,9 @@ pathenv() {
 
   return $rc
 }
-__ENVFILE_SET=
+
+__PATHENV_PREVIOUS_SUPER=
+__PATHENV_SET=
 
 export -f pathenv
 
