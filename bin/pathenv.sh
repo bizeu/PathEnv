@@ -48,21 +48,24 @@ export TOP
 #   $?
 #######################################
 pathenv() {
-  local rc=$? basename EnvFile file function="pathenv" line project=false set tops tmp upper variable verbose=false
-  set="$(grep -v "^rc=" <<< "${__PATHENV_SET-}")"
-  __PATHENV_PREVIOUS_SUPER=${SUPER-}
+  local rc=$? basename EnvFile file function="pathenv" line project=false tops tmp upper variable verbose=false
 
   test $# -eq 0 || "${FUNCNAME[0]}.sh" "$@"
+
+  __PATHENV_PREVIOUS_SUPER=${SUPER-}
 
   if tops="$(git rev-parse --show-superproject-working-tree --show-toplevel 2>/dev/null)"; then
     project=true
     SUPER="$(echo "${tops}" | tail -1)"
     TOP="$(echo "${tops}" | head -1)"
+  else
+    SUPER=""
+    TOP=""
   fi
-  # TODO: no puedo cambiar todas las variables y funciones asi por asi, tienen que ser las que he cambiado yo haciendo algo aqui, o sea hay que guardar lo que he hecho y punto.
+
   if [ "${SUPER-}" != "${__PATHENV_PREVIOUS_SUPER}" ]; then
     __PATHENV_SET="$(set | grep -vE "^rc=|^set=|^BASH|")"
-    if [ "${SUPER-}" ]; then
+    if $project; then
       basename="${SUPER##*/}"
       upper="${basename^^}"
     fi
